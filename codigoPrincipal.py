@@ -3,21 +3,7 @@ from random import randint
 import time
 import sys
 import numpy as np
-
-sys.setrecursionlimit(10 ** 9)
-
-def partition(colecao, l, h):
-    i = ( l - 1 )
-    x = colecao[h]
- 
-    for j in range(l, h):
-        if   colecao[j] <= x:
-
-            i = i + 1
-            colecao[i], colecao[j] = colecao[j], colecao[i]
- 
-    colecao[i + 1], colecao[h] = colecao[h], colecao[i + 1]
-    return (i + 1)
+import pandas as pd
  
 def quickSortIterative(colecao, l, h):
  
@@ -52,6 +38,18 @@ def quickSortIterative(colecao, l, h):
             top = top + 1
             stack[top] = h
 
+def partition(colecao, low, high):
+    i = (low - 1)        
+    pivot = colecao[high]    
+ 
+    for j in range(low, high):
+        if colecao[j] <= pivot:
+            i += 1
+            colecao[i], colecao[j] = colecao[j], colecao[i]
+ 
+    colecao[i + 1], colecao[high] = colecao[high], colecao[i + 1]
+    return (i + 1)
+ 
 def quickSortRecursive(colecao, low, high):
     if low < high:
  
@@ -60,26 +58,48 @@ def quickSortRecursive(colecao, low, high):
         quickSortRecursive(colecao, low, pi-1)
         quickSortRecursive(colecao, pi + 1, high)
 
-def criarColecao(colecao, tamanho):
-     for indice in range(0, tamanho):
-        valor = np.int64(randint(0, 51))
-        colecao.append(valor)
+def createCollection(size):
+    collection = []
+    for index in range(0, size):
+        value = np.int64(randint(0, 51))
+        collection.append(value)
+    return collection
+
+def testPerformance(multiplyBy5, collectionSize, recursiveResults = [], iterativeResults = [], sizesCollection = []):
+    if collectionSize <= 10000:
+
+        print(f"Testando lista com {collectionSize} itens. . .")
+        
+        sizesCollection.append(collectionSize)
+        collection = createCollection(collectionSize)
+
+        initialTime = time.time() 
+        quickSortRecursive(collection, 0, collectionSize - 1)
+        finalTime = time.time()
+        recursiveResults.append(f"{round(finalTime - initialTime,4)}s")
+
+        initialTime = time.time() 
+        quickSortIterative(collection, 0, collectionSize - 1) 
+        finalTime = time.time()
+        iterativeResults.append(f"{round(finalTime - initialTime,4)}s")
+
+        multiplyBy5 = not multiplyBy5
+        if multiplyBy5:
+            collectionSize *= 5
+        else:
+            collectionSize *= 2
+
+        testPerformance(multiplyBy5, collectionSize, recursiveResults, iterativeResults)
+
+    else:
+        print("Ok!\n\nVeja os resultados:\n")
+
+        dictResults = {"TAMANHO_LISTA": sizesCollection, "TEMPO_RECURSIVA": recursiveResults, "TEMPO_ITERATIVA": iterativeResults}
+        dataFrame_Results = pd.DataFrame.from_dict(dictResults)
+        print(dataFrame_Results)
 
 def main():
-    TAMANHO = 10000 
-    colecao = []    
-    criarColecao(colecao,  TAMANHO)
-
-    colecaoRecursiva = colecao.copy()
-    colecaoIterativa = colecao.copy()   
-    tempoInicial = time.time() 
-    quickSortRecursive(colecaoRecursiva, 0, TAMANHO - 1)
-    tempoFinal = time.time()    
-    print("Tempo Solução Recursiva: {} s".format(tempoFinal - tempoInicial))    
-    tempoInicial = time.time() 
-    quickSortIterative(colecaoIterativa, 0, TAMANHO - 1) 
-    tempoFinal = time.time()
-    print("Tempo Solução Iterativa: {} s".format(tempoFinal - tempoInicial))
-
-if __name__ == '__main__' :
+    testPerformance(False, 10)
+    
+if  __name__ == '__main__' :
     main()
