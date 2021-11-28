@@ -6,7 +6,7 @@ import sys
 import os
 import numpy as np
 import pandas as pd
-from pandas.io.sql import pandasSQL_builder
+import matplotlib.pyplot as plt
  
 def quickSortIterable(colecao, l, h):
  
@@ -60,6 +60,7 @@ def quickSortRecursive(colecao, low, high):
  
         quickSortRecursive(colecao, low, pi-1)
         quickSortRecursive(colecao, pi + 1, high)
+    
 
 def createCollection(size):
     collection = []
@@ -94,12 +95,12 @@ def testPerformance(collectionSize, resultsDict):
     initialTime = time.time() 
     quickSortRecursive(collection, 0, collectionSize - 1)
     finalTime = time.time()
-    resultsDict["TEMPO_RECURSIVA"].append(f"{round(finalTime - initialTime,4)}s")
+    resultsDict["TEMPO_RECURSIVA (s)"].append(round(finalTime - initialTime,4))
 
     initialTime = time.time() 
     quickSortIterable(collection, 0, collectionSize - 1) 
     finalTime = time.time()
-    resultsDict["TEMPO_ITERAVEL"].append(f"{round(finalTime - initialTime,4)}s")
+    resultsDict["TEMPO_ITERAVEL (s)"].append(round(finalTime - initialTime,4))
 
     return resultsDict
 
@@ -108,26 +109,60 @@ def showResults(resultsDict):
     print(pd.DataFrame.from_dict(resultsDict))
     input("\nPressione enter para continuar. . .")
 
+def getHighestTime(timeLists, highestTime = 0.0, index = 0):
+    if (index < len(timeLists[0])):
+        if (timeLists[0][index] > highestTime):
+            highestTime = timeLists[0][index]
+        if (timeLists[1][index] > highestTime):
+            highestTime = timeLists[1][index]
+        index += 1
+        return getHighestTime(timeLists, highestTime, index)
+    else:
+        return highestTime
+
+def getHighestSize(sizesList, highestSize = 0, index = 0):
+    if (index < len(sizesList)):
+        if (sizesList[index] > highestSize):
+            highestSize = sizesList[index]
+        index += 1
+        return getHighestSize(sizesList, highestSize, index)
+    else:
+        return highestSize
+
+
+
+def createGraph(resultsDict):
+    highestTime = getHighestTime([resultsDict["TEMPO_ITERAVEL (s)"], resultsDict["TEMPO_RECURSIVA (s)"]])
+    highestSize = getHighestSize(resultsDict["TAMANHO_LISTA"])
+    plt.axis([0, highestSize, 0, highestTime])
+    plt.plot(resultsDict["TAMANHO_LISTA"], resultsDict["TEMPO_ITERAVEL (s)"], label="Quicksort Iterável")
+    plt.plot(resultsDict["TAMANHO_LISTA"], resultsDict["TEMPO_RECURSIVA (s)"],  label="Quicksort Recursiva")
+    plt.title("Tempo de execução por tamanho de lista (Quicksort Iterável X Recursiva)")
+    plt.xlabel("Quantidade de itens na lista (N)")
+    plt.ylabel("Tempo de execução (s)")
+    plt.legend()
+
 def main():
 
     resultsDict = {"MOMENTO_REALIZADO": [],
                    "TAMANHO_LISTA": [],
-                   "TEMPO_ITERAVEL": [],
-                   "TEMPO_RECURSIVA": []}
+                   "TEMPO_ITERAVEL (s)": [],
+                   "TEMPO_RECURSIVA (s)": []}
+
+    os.system("CLS")
 
     print("Bem-vindo ao sistema de teste de perfomance: Recursividade X Iteração\n" +
           "Neste teste será executado duas funções Quicksort em uma list contendo diversos itens, uma delas percorre a list de forma recursiva, enquanto a outra faz isso de forma iterativa\n" +
-          "Os resultados serão relatados após o teste")
+          "Os resultados serão relatados após o teste\n")
 
     while True:
-        os.system("CLS")
         print("1 - Realizar teste pré-definido (10 até 10000 itens)\n" +
               "2 - Realizar teste com um número selecionado de itens\n" +
               "3 - Ver resultado dos testes\n" +
               "4 - Exportar resultados em uma planilha (.xlsx)\n" +
               "5 - Exportar resultados em um arquivo de texto (.csv)\n" +
               "6 - Limpar resultados\n" +
-              "7 - Sair\n")
+              "7 - Ver gráfico com resultados finais e encerrar\n")
 
         selection = int(input("Escolha: "))
         if (selection < 1 or selection > 7):
@@ -151,6 +186,7 @@ def main():
                     input("Ainda não foi realizado nenhum teste.\nPressione enter para continuar. . .")
             elif (selection == 4):
                 resultsDataFrame = pd.DataFrame.from_dict(resultsDict)
+                print(resultsDataFrame)
                 resultsDataFrame.to_excel(f"{input('Digite o nome do arquivo: ')}.xlsx")
                 input("Arquivo gerado com sucesso!\nPressione Enter Para Continuar. . .")
             elif (selection == 5):
@@ -165,14 +201,24 @@ def main():
                         if (confirm == "S"):
                             resultsDict = {"MOMENTO_REALIZADO": [],
                                            "TAMANHO_LISTA": [],
-                                           "TEMPO_RECURSIVA": [],
-                                           "TEMPO_ITERAVEL": []}
+                                           "TEMPO_RECURSIVA (s)": [],
+                                           "TEMPO_ITERAVEL (s)": []}
                             input("Dados apagados com sucesso!\nPressione enter para continuar...")
                         break
             else:
                 break
+        os.system("CLS")
 
-    print("Obrigado por usar o sistema!")
+    while True:
+        confirm = input("Deseja também salvar os resultados? [S/N]\nEscolha: ").upper()
+        os.system("CLS")
+        if (confirm == "S" or confirm == "N"):
+            createGraph(resultsDict)
+            if (confirm == "S"):
+                plt.savefig(f"{input('Digite o nome do arquivo: ')}.png")
+            plt.show()
+            print("Obrigado por utilizar o sistema!")
+            break
     
 if  __name__ == '__main__' :
     main()
